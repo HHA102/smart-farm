@@ -7,6 +7,7 @@ import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
 import SensorScreen from "./screens/SensorScreen";
 import ChartScreen from "./screens/ChartScreen";
+import PumpControlScreen from "./screens/PumpControlScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +24,7 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Sensors" component={SensorScreen} />
         <Stack.Screen name="Charts" component={ChartScreen} />
+        <Stack.Screen name="PumpControl" component={PumpControlScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
