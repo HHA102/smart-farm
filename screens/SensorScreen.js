@@ -105,13 +105,23 @@ export default function SensorScreen({ navigation }) {
       </ScrollView>
 
       <View style={styles.bottomContainer}>
-        <TouchableOpacity
-          style={styles.chartButton}
-          onPress={() => navigation.navigate("Charts")}
-        >
-          <Ionicons name="bar-chart-outline" size={24} color="white" />
-          <Text style={styles.chartButtonText}>View Charts</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.button, styles.chartButton]}
+            onPress={() => navigation.navigate("Charts")}
+          >
+            <Ionicons name="bar-chart-outline" size={24} color="white" />
+            <Text style={styles.buttonText}>View Charts</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.pumpButton]}
+            onPress={() => navigation.navigate("PumpControl")}
+          >
+            <Ionicons name="water-outline" size={24} color="white" />
+            <Text style={styles.buttonText}>Pump Control</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -188,8 +198,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ddd",
   },
-  chartButton: {
-    backgroundColor: "#4CAF50",
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  button: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -204,7 +219,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
-  chartButtonText: {
+  chartButton: {
+    backgroundColor: "#4CAF50",
+  },
+  pumpButton: {
+    backgroundColor: "#2E7D32",
+  },
+  buttonText: {
     color: "white",
     fontWeight: "bold",
     fontSize: 16,
