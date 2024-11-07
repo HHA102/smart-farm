@@ -1,3 +1,5 @@
+import axios from "axios";
+import { useCallback, useState } from "react";
 import {
   Text,
   SafeAreaView,
@@ -6,16 +8,40 @@ import {
   TextInput,
 } from "react-native";
 
+
 export default function LoginScreen({ navigation }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  const loginUser = useCallback(async () => {
+    console.log('username', username);
+    console.log('password', password);
+
+    try {
+      const response = await axios.post('http://10.0.2.2:8080/api/auth/login', {
+        username, password
+      });
+      const { data } = response;
+      if (data.success) {
+        navigation.navigate('Sensors')
+      } else {
+        alert('Login failed: ' + data.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }, [username, password])
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Login</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
+        placeholder="Username"
         autoCapitalize="none"
+        value={username}
+        onChangeText={setUsername}
       />
 
       <TextInput
@@ -23,11 +49,13 @@ export default function LoginScreen({ navigation }) {
         placeholder="Password"
         secureTextEntry
         autoCapitalize="none"
+        value={password}
+        onChangeText={setPassword}
       />
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate("Sensors")}
+        onPress={loginUser}
       >
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>

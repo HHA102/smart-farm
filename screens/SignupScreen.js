@@ -1,3 +1,5 @@
+import axios from "axios";
+import { useCallback, useState } from "react";
 import {
   Text,
   SafeAreaView,
@@ -6,41 +8,104 @@ import {
   TextInput,
 } from "react-native";
 
+// const registerUser = async (username, email, address, phone, password) => {
+//   try {
+//     const response = await fetch('https://localhost:8080/api/auth/register', {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify({ username, email, address, phone, password }),
+//     });
+//     const data = await response.json();
+//     if (data.success) {
+//       alert('Registration successful!');
+//     } else {
+//       alert('Registration failed: ' + data.message);
+//     }
+//   } catch (error) {
+//     console.error(error);
+//   }
+// };
+
 export default function SignupScreen({ navigation }) {
+
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const registerUser = useCallback(async () => {
+    if (password !== confirmPassword) {
+      Alert.alert('Error comfirm password')
+    }
+    console.log('username', username);
+    console.log('password', password);
+    console.log('email', email);
+    console.log('phone', phone);
+
+    try {
+      const response = await axios.post('http://10.0.2.2:8080/api/auth/register', {
+        username, password, email, phone
+      });
+      const { data } = response;
+      if (data.success) {
+        alert('Registration successful!');
+        navigation.navigate('Login');
+      } else {
+        alert('Registration failed: ' + data.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }, [username, password, email, phone]);
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Sign Up</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Full Name"
+        placeholder="User Name"
         autoCapitalize="words"
+        value={username}
+        onChangeText={setUsername}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Email"
         keyboardType="email-address"
-        autoCapitalize="none"
+        value={email}
+        onChangeText={setEmail}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Password"
         secureTextEntry
-        autoCapitalize="none"
+        value={password}
+        onChangeText={setPassword}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Confirm Password"
         secureTextEntry
-        autoCapitalize="none"
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Phone number"
+        secureTextEntry
+        value={phone}
+        onChangeText={setPhone}
       />
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate("Home")}
+        onPress={registerUser}
       >
         <Text style={styles.buttonText}>Create Account</Text>
       </TouchableOpacity>
@@ -79,7 +144,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
   },
   button: {
-    backgroundColor: "#2E7D32", // Darker green to match the signup button from welcome screen
+    backgroundColor: "#2E7D32",
     padding: 15,
     borderRadius: 8,
     width: "80%",
