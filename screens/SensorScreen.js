@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Text,
   SafeAreaView,
@@ -6,67 +7,97 @@ import {
   View,
   TouchableOpacity,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons"; // Make sure to install expo/vector-icons
+import { Ionicons } from "@expo/vector-icons";
 
 export default function SensorScreen({ navigation }) {
-  const sensorData = [
+  const [sensorData, setSensorData] = useState([
     {
-      id: 1,
+      id: "temp",
       name: "Temperature",
-      value: "28°C",
+      value: "Loading...",
       icon: "thermometer-outline",
       status: "Normal",
     },
     {
-      id: 2,
-      name: "Humidity",
-      value: "65%",
-      icon: "water-outline",
-      status: "High",
-    },
-    {
-      id: 3,
-      name: "Soil Moisture",
-      value: "45%",
-      icon: "leaf-outline",
-      status: "Normal",
-    },
-    {
-      id: 4,
-      name: "Light Intensity",
-      value: "850 lux",
+      id: "humidity",
+      name: "Light",
+      value: "Loading...",
       icon: "sunny-outline",
       status: "Normal",
     },
     {
-      id: 5,
-      name: "pH Level",
-      value: "6.5",
-      icon: "flask-outline",
+      id: "soil",
+      name: "Soil Moisture",
+      value: "Loading...",
+      icon: "leaf-outline",
       status: "Normal",
     },
     {
-      id: 6,
-      name: "CO2 Level",
-      value: "410 ppm",
-      icon: "cloud-outline",
+      id: "pump",
+      name: "Pump Status",
+      value: "Loading...",
+      icon: "water-outline",
       status: "Normal",
     },
     {
-      id: 7,
-      name: "Wind Speed",
-      value: "12 km/h",
-      icon: "wind-outline",
+      id: "led",
+      name: "LED Status",
+      value: "Loading...",
+      icon: "bulb-outline",
       status: "Normal",
     },
-    {
-      id: 8,
-      name: "Rainfall",
-      value: "2.5 mm",
-      icon: "rainy-outline",
-      status: "Low",
-    },
-  ];
+  ]);
+
+  const fetchSensorData = async () => {
+    try {
+      const endpoints = {
+        temp: "https://io.adafruit.com/api/v2/longthangtran/feeds/iot-temp/data",
+        light:
+          "https://io.adafruit.com/api/v2/longthangtran/feeds/iot-light/data",
+        soil: "https://io.adafruit.com/api/v2/longthangtran/feeds/iot-soil-moisture/data",
+        pump: "https://io.adafruit.com/api/v2/longthangtran/feeds/iot-pump/data",
+        led: "https://io.adafruit.com/api/v2/longthangtran/feeds/iot-led/data",
+      };
+
+      const responses = await Promise.all(
+        Object.values(endpoints).map((url) =>
+          fetch(url).then((res) => res.json())
+        )
+      );
+
+      const [temp, light, soil, pump, led] = responses.map(
+        (data) => data[0]?.value || "N/A"
+      );
+
+      setSensorData((prev) =>
+        prev.map((sensor) => {
+          switch (sensor.id) {
+            case "temp":
+              return { ...sensor, value: `${temp}°C` };
+            case "humidity":
+              return { ...sensor, value: `${light} lux` };
+            case "soil":
+              return { ...sensor, value: `${soil}%` };
+            case "pump":
+              return { ...sensor, value: pump === "1" ? "ON" : "OFF" };
+            case "led":
+              return { ...sensor, value: led === "1" ? "ON" : "OFF" };
+            default:
+              return sensor;
+          }
+        })
+      );
+    } catch (error) {
+      console.error("Error fetching sensor data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSensorData(); // Initial fetch
+    const interval = setInterval(fetchSensorData, 3000); // Fetch every 3 seconds
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
