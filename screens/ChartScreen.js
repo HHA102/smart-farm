@@ -127,7 +127,7 @@ const ChartScreen = () => {
         const response = await fetch('https://io.adafruit.com/api/v2/longthangtran/feeds/iot-temp/data/chart', {
           method: 'GET',
           headers: {
-            'X-AIO-Key': 'iot-temp' // Thay thế bằng API Key của bạn
+            'X-AIO-Key': process.env.AIO_KEY // Thay thế bằng API Key của bạn
           },
         });
 
