@@ -281,7 +281,7 @@ export default function PumpControlScreen({ navigation }) {
   const togglePump = async () => {
     try {
       // Call API to toggle pump status
-      const response = await fetch(`https://io.adafruit.com/api/v2/longthangtran/feeds/iot-pump/data/last?X-AIO-Key=${process.env.AIO_KEY_BOM}`, {
+      const response = await fetch(`${process.env.AIO_KEY_URL}${process.env.AIO_KEY_BOM}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
