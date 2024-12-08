@@ -281,7 +281,8 @@ export default function PumpControlScreen({ navigation }) {
   const togglePump = async () => {
     try {
       // Call API to toggle pump status
-      const response = await fetch(`${process.env.AIO_KEY_URL}${process.env.AIO_KEY_BOM}`, {
+      const apiUrl = process.env.AIO_KEY_URL;
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
