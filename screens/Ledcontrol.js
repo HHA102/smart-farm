@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Text,
   SafeAreaView,
@@ -7,10 +7,38 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { AIO_KEY } from '@env';
 
 export default function LightControlScreen({ navigation }) {
   const [isLightOn, setIsLightOn] = useState(false);
 
+  // Hàm lấy trạng thái đèn LED từ API khi màn hình được load lần đầu tiên
+  useEffect(() => {
+    const fetchLightStatus = async () => {
+      try {
+        const apiUrl = 'https://io.adafruit.com/api/v2/longthangtran/feeds/iot-led/data';
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-AIO-Key': AIO_KEY,
+          },
+        });
+        const data = await response.json();
+        if (data && data[0] && data[0].value === "1") {
+          setIsLightOn(true); // Nếu giá trị là "1", đèn LED đang bật
+        } else {
+          setIsLightOn(false); // Nếu giá trị là "0", đèn LED đang tắt
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy trạng thái đèn LED:", error);
+      }
+    };
+
+    fetchLightStatus();
+  }, []); // Chỉ chạy một lần khi component được mount
+
+  // Hàm bật/tắt đèn LED
   const toggleLight = async () => {
     try {
       const apiUrl = 'https://io.adafruit.com/api/v2/longthangtran/feeds/iot-led/data';
@@ -18,18 +46,18 @@ export default function LightControlScreen({ navigation }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-AIO-Key': 'aio_nwYF43EkIoi4KGtLDr7gZccfb04C',
+          'X-AIO-Key': AIO_KEY,
         },
-        body: JSON.stringify({ value: isLightOn ? "0" : "1" }),
+        body: JSON.stringify({ value: isLightOn ? "0" : "1" }), // Gửi giá trị "0" hoặc "1"
       });
 
       if (response.ok) {
-        setIsLightOn(!isLightOn);
+        setIsLightOn(!isLightOn); // Chuyển đổi trạng thái đèn LED
       } else {
-        console.error("Failed to toggle light");
+        console.error("Không thể bật/tắt đèn LED");
       }
     } catch (error) {
-      console.error("Error toggling light:", error);
+      console.error("Lỗi khi điều khiển đèn LED:", error);
     }
   };
 
@@ -40,7 +68,7 @@ export default function LightControlScreen({ navigation }) {
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFD700" />
+          <Ionicons name="arrow-back" size={24} color="#2E7D32" />
         </TouchableOpacity>
         <Text style={styles.title}>Light Control</Text>
       </View>
@@ -54,14 +82,14 @@ export default function LightControlScreen({ navigation }) {
             color={isLightOn ? "#FFD700" : "#666"}
           />
           <Text
-            style={[styles.statusText, { color: isLightOn ? "#FFD700" : "#666" }]}
+            style={[styles.statusText, { color: isLightOn ? "#2E7D32" : "#666" }]}
           >
             Light is {isLightOn ? "ON" : "OFF"}
           </Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: isLightOn ? "#F44336" : "#FFD700" }]}
+          style={[styles.button, { backgroundColor: isLightOn ? "#F44336" : "#2E7D32" }]}
           onPress={toggleLight}
         >
           <Text style={styles.buttonText}>
@@ -92,7 +120,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#FFD700",
+    color: "#2E7D32",
   },
   section: {
     backgroundColor: "white",

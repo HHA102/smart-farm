@@ -113,6 +113,7 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, ScrollView, Text, View, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { AIO_KEY } from '@env';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -120,105 +121,115 @@ const ChartScreen = () => {
   const [dataSets, setDataSets] = useState({
     temp: { labels: [], data: [] },
     soilMoisture: { labels: [], data: [] },
-    // humidity: { labels: [], data: [] },
     light: { labels: [], data: [] },
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async (feed) => {
-      try {
-        const response = await fetch(
-          `https://io.adafruit.com/api/v2/longthangtran/feeds/${feed}/data/chart`,
-          {
-            method: 'GET',
-            headers: {
-              'X-AIO-Key': 'aio_nwYF43EkIoi4KGtLDr7gZccfb04C', // Replace with your API Key
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch data for feed: ${feed}`);
+  // Hàm fetchData với các kiểm tra dữ liệu hợp lệ
+  const fetchData = async (feed) => {
+    try {
+      const response = await fetch(
+        `https://io.adafruit.com/api/v2/longthangtran/feeds/${feed}/data/chart`,
+        {
+          method: 'GET',
+          headers: {
+            'X-AIO-Key': AIO_KEY, // Sử dụng API Key đúng
+          },
         }
+      );
 
-        const result = await response.json();
-
-        if (result.data && Array.isArray(result.data)) {
-          const labels = result.data.map((item) => item[0]?.slice(11, 16) || ''); // HH:MM
-          const data = result.data.map((item) => parseFloat(item[1] || 0));
-
-          return { labels, data };
-        } else {
-          throw new Error('Unexpected API response format');
-        }
-      } catch (error) {
-        console.error(`Error fetching data for ${feed}:`, error);
-        setError(`Failed to load data for ${feed}`);
-        return { labels: [], data: [] };
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data for feed: ${feed}`);
       }
-    };
 
-    const fetchAllData = async () => {
-      setLoading(true);
-      setError(null);
+      const result = await response.json();
+      console.log('API Response:', result); // Debug API Response
 
-      const tempData = await fetchData('iot-temp');
-      const soilMoistureData = await fetchData('iot-soil-moisture');
-      // const humidityData = await fetchData('iot-humi');
-      const lightData = await fetchData('iot-light');
+      // Kiểm tra nếu dữ liệu trả về có đúng định dạng không
+      if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+        const labels = result.data.map((item) => item[0]?.slice(11, 16) || ''); // Lấy giờ: phút
+        const data = result.data.map((item) => parseFloat(item[1] || 0)); // Chuyển giá trị sang số thực
+        return { labels, data };
+      } else {
+        // Nếu dữ liệu không hợp lệ hoặc mảng data rỗng
+        return { labels: ['No data'], data: [0] }; // Trả về dữ liệu mặc định
+      }
+    } catch (error) {
+      console.error(`Error fetching data for ${feed}:`, error);
+      setError(`Failed to load data for ${feed}`);
+      return { labels: ['Error'], data: [0] }; // Trả về dữ liệu lỗi
+    }
+  };
 
-      setDataSets({
-        temp: tempData,
-        soilMoisture: soilMoistureData,
-        // humidity: humidityData,
-        light: lightData,
-      });
+  // Hàm fetchAllData để lấy tất cả dữ liệu từ các feed
+  const fetchAllData = async () => {
+    setLoading(true);
+    setError(null);
 
-      setLoading(false);
-    };
+    const tempData = await fetchData('iot-temp');
+    const soilMoistureData = await fetchData('iot-soil-moisture');
+    const lightData = await fetchData('iot-light');
 
+    setDataSets({
+      temp: tempData,
+      soilMoisture: soilMoistureData,
+      light: lightData,
+    });
+
+    setLoading(false);
+  };
+
+  // Gọi fetchAllData khi component được mount
+  useEffect(() => {
     fetchAllData();
   }, []);
 
-  const renderChart = (title, data) => (
-    <View style={styles.chartContainer}>
-      <Text style={styles.chartTitle}>{title}</Text>
-      <LineChart
-        data={{
-          labels: data.labels,
-          datasets: [
-            {
-              data: data.data,
-              color: (opacity = 1) => `rgba(0, 128, 255, ${opacity})`,
-              strokeWidth: 2,
+  // Hàm render Chart nếu có dữ liệu hợp lệ
+  const renderChart = (title, data) => {
+    // Kiểm tra dữ liệu trước khi render chart
+    if (data.labels.length === 0 || data.data.length === 0) {
+      return <Text style={styles.errorText}>No data available for {title}</Text>;
+    }
+
+    return (
+      <View style={styles.chartContainer}>
+        <Text style={styles.chartTitle}>{title}</Text>
+        <LineChart
+          data={{
+            labels: data.labels,
+            datasets: [
+              {
+                data: data.data,
+                color: (opacity = 1) => `rgba(0, 128, 255, ${opacity})`, // Màu của line chart
+                strokeWidth: 2,
+              },
+            ],
+          }}
+          width={screenWidth - 20}
+          height={220}
+          chartConfig={{
+            backgroundColor: '#e26a00',
+            backgroundGradientFrom: '#fb8c00',
+            backgroundGradientTo: '#ffa726',
+            decimalPlaces: 2,
+            color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+            style: {
+              borderRadius: 16,
             },
-          ],
-        }}
-        width={screenWidth - 20}
-        height={220}
-        chartConfig={{
-          backgroundColor: '#e26a00',
-          backgroundGradientFrom: '#fb8c00',
-          backgroundGradientTo: '#ffa726',
-          decimalPlaces: 2,
-          color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-          labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-          style: {
-            borderRadius: 16,
-          },
-          propsForDots: {
-            r: '6',
-            strokeWidth: '2',
-            stroke: '#ffa726',
-          },
-        }}
-        withDots={true}
-        withInnerLines={false}
-      />
-    </View>
-  );
+            propsForDots: {
+              r: '6',
+              strokeWidth: '2',
+              stroke: '#ffa726',
+            },
+          }}
+          withDots={true}
+          withInnerLines={false}
+        />
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -233,7 +244,6 @@ const ChartScreen = () => {
           <>
             {renderChart('Temperature', dataSets.temp)}
             {renderChart('Soil Moisture', dataSets.soilMoisture)}
-            {/* {renderChart('Humidity', dataSets.humidity)} */}
             {renderChart('Light Intensity', dataSets.light)}
           </>
         )}
@@ -245,10 +255,11 @@ const ChartScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 50,
     backgroundColor: '#fff',
   },
   scrollView: {
-    padding: 10,
+    marginHorizontal: 20,
   },
   title: {
     fontSize: 24,
@@ -256,35 +267,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+  chartContainer: {
+    marginBottom: 30,
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
   loadingText: {
     fontSize: 18,
     textAlign: 'center',
     color: 'gray',
-    marginTop: 50,
   },
   errorText: {
     fontSize: 18,
     textAlign: 'center',
     color: 'red',
-    marginTop: 50,
-  },
-  chartContainer: {
-    marginBottom: 30,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  chartTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
   },
 });
 
 export default ChartScreen;
+
+
