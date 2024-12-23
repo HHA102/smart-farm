@@ -141,15 +141,21 @@ export default function SensorScreen({ navigation }) {
             style={[styles.button, styles.chartButton]}
             onPress={() => navigation.navigate("Charts")}
           >
-            <Ionicons name="bar-chart-outline" size={24} color="white" />
+            <Ionicons name="bar-chart-outline" size={20} color="white" />
             <Text style={styles.buttonText}>View Charts</Text>
           </TouchableOpacity>
-
+          <TouchableOpacity
+            style={[styles.button, styles.chartButton]}
+            onPress={() => navigation.navigate("LedControl")}
+          >
+            <Ionicons name="bulb-outline" size={20} color="white" />
+            <Text style={styles.buttonText}>Led Control</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.pumpButton]}
             onPress={() => navigation.navigate("PumpControl")}
           >
-            <Ionicons name="water-outline" size={24} color="white" />
+            <Ionicons name="water-outline" size={20} color="white" />
             <Text style={styles.buttonText}>Pump Control</Text>
           </TouchableOpacity>
         </View>
@@ -254,6 +260,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#4CAF50",
   },
   pumpButton: {
+    backgroundColor: "#2E7D32",
+  },
+  ledButton: {
     backgroundColor: "#2E7D32",
   },
   buttonText: {

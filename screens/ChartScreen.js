@@ -117,80 +117,125 @@ import { LineChart } from 'react-native-chart-kit';
 const screenWidth = Dimensions.get('window').width;
 
 const ChartScreen = () => {
-  const [chartData, setChartData] = useState({ labels: [], data: [] });
+  const [dataSets, setDataSets] = useState({
+    temp: { labels: [], data: [] },
+    soilMoisture: { labels: [], data: [] },
+    // humidity: { labels: [], data: [] },
+    light: { labels: [], data: [] },
+  });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Đường dẫn API của Adafruit
-    const fetchData = async () => {
+    const fetchData = async (feed) => {
       try {
-        const response = await fetch('https://io.adafruit.com/api/v2/longthangtran/feeds/iot-temp/data/chart', {
-          method: 'GET',
-          headers: {
-            'X-AIO-Key': process.env.AIO_KEY // Thay thế bằng API Key của bạn
-          },
-        });
+        const response = await fetch(
+          `https://io.adafruit.com/api/v2/longthangtran/feeds/${feed}/data/chart`,
+          {
+            method: 'GET',
+            headers: {
+              'X-AIO-Key': 'aio_nwYF43EkIoi4KGtLDr7gZccfb04C', // Replace with your API Key
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data for feed: ${feed}`);
+        }
 
         const result = await response.json();
 
-        // Chuyển đổi dữ liệu thành định dạng phù hợp
-        const labels = result.data.map(item => item[0].slice(11, 16)); // Lấy thời gian dạng HH:MM
-        const data = result.data.map(item => item[1]); // Giá trị nhiệt độ
+        if (result.data && Array.isArray(result.data)) {
+          const labels = result.data.map((item) => item[0]?.slice(11, 16) || ''); // HH:MM
+          const data = result.data.map((item) => parseFloat(item[1] || 0));
 
-        setChartData({
-          labels: labels,
-          data: [data]  // Dữ liệu cần là mảng mảng
-        });
-        setLoading(false);
+          return { labels, data };
+        } else {
+          throw new Error('Unexpected API response format');
+        }
       } catch (error) {
-        console.error('Error fetching data:', error);
-        setLoading(false);
+        console.error(`Error fetching data for ${feed}:`, error);
+        setError(`Failed to load data for ${feed}`);
+        return { labels: [], data: [] };
       }
     };
 
-    fetchData();
+    const fetchAllData = async () => {
+      setLoading(true);
+      setError(null);
+
+      const tempData = await fetchData('iot-temp');
+      const soilMoistureData = await fetchData('iot-soil-moisture');
+      // const humidityData = await fetchData('iot-humi');
+      const lightData = await fetchData('iot-light');
+
+      setDataSets({
+        temp: tempData,
+        soilMoisture: soilMoistureData,
+        // humidity: humidityData,
+        light: lightData,
+      });
+
+      setLoading(false);
+    };
+
+    fetchAllData();
   }, []);
+
+  const renderChart = (title, data) => (
+    <View style={styles.chartContainer}>
+      <Text style={styles.chartTitle}>{title}</Text>
+      <LineChart
+        data={{
+          labels: data.labels,
+          datasets: [
+            {
+              data: data.data,
+              color: (opacity = 1) => `rgba(0, 128, 255, ${opacity})`,
+              strokeWidth: 2,
+            },
+          ],
+        }}
+        width={screenWidth - 20}
+        height={220}
+        chartConfig={{
+          backgroundColor: '#e26a00',
+          backgroundGradientFrom: '#fb8c00',
+          backgroundGradientTo: '#ffa726',
+          decimalPlaces: 2,
+          color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          style: {
+            borderRadius: 16,
+          },
+          propsForDots: {
+            r: '6',
+            strokeWidth: '2',
+            stroke: '#ffa726',
+          },
+        }}
+        withDots={true}
+        withInnerLines={false}
+      />
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
-        <Text style={styles.title}>Temperature Chart</Text>
+        <Text style={styles.title}>Sensor Charts</Text>
 
         {loading ? (
           <Text style={styles.loadingText}>Loading...</Text>
+        ) : error ? (
+          <Text style={styles.errorText}>{error}</Text>
         ) : (
-          <LineChart
-            data={{
-              labels: chartData.labels,
-              datasets: [
-                {
-                  data: chartData.data[0] || [],
-                  color: (opacity = 1) => `rgba(0, 128, 255, ${opacity})`,
-                  strokeWidth: 2,
-                },
-              ],
-            }}
-            width={screenWidth - 20}
-            height={220}
-            chartConfig={{
-              backgroundColor: '#e26a00',
-              backgroundGradientFrom: '#fb8c00',
-              backgroundGradientTo: '#ffa726',
-              decimalPlaces: 2,
-              color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-              style: {
-                borderRadius: 16,
-              },
-              propsForDots: {
-                r: '6',
-                strokeWidth: '2',
-                stroke: '#ffa726',
-              },
-            }}
-            withDots={true}
-            withInnerLines={false}
-          />
+          <>
+            {renderChart('Temperature', dataSets.temp)}
+            {renderChart('Soil Moisture', dataSets.soilMoisture)}
+            {/* {renderChart('Humidity', dataSets.humidity)} */}
+            {renderChart('Light Intensity', dataSets.light)}
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -216,6 +261,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'gray',
     marginTop: 50,
+  },
+  errorText: {
+    fontSize: 18,
+    textAlign: 'center',
+    color: 'red',
+    marginTop: 50,
+  },
+  chartContainer: {
+    marginBottom: 30,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
   },
 });
 
