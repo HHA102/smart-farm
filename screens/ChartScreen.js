@@ -116,7 +116,6 @@ import { LineChart } from 'react-native-chart-kit';
 import { AIO_KEY } from '@env';
 
 const screenWidth = Dimensions.get('window').width;
-
 const ChartScreen = () => {
   const [dataSets, setDataSets] = useState({
     temp: { labels: [], data: [] },
@@ -138,17 +137,22 @@ const ChartScreen = () => {
           },
         }
       );
-
+  
       if (!response.ok) {
         throw new Error(`Failed to fetch data for feed: ${feed}`);
       }
-
+  
       const result = await response.json();
       console.log('API Response:', result); // Debug API Response
-
+  
       // Kiểm tra nếu dữ liệu trả về có đúng định dạng không
       if (result.data && Array.isArray(result.data) && result.data.length > 0) {
-        const labels = result.data.map((item) => item[0]?.slice(11, 16) || ''); // Lấy giờ: phút
+        const labels = result.data.map((item) => {
+          // Chuyển đổi thời gian từ UTC sang giờ địa phương
+          const utcDate = new Date(item[0]); // item[0] là thời gian UTC
+          return utcDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        });
+  
         const data = result.data.map((item) => parseFloat(item[1] || 0)); // Chuyển giá trị sang số thực
         return { labels, data };
       } else {
