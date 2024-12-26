@@ -8,6 +8,7 @@ import SignupScreen from "./screens/SignupScreen";
 import SensorScreen from "./screens/SensorScreen";
 import ChartScreen from "./screens/ChartScreen";
 import PumpControlScreen from "./screens/PumpControlScreen";
+import LedControlScreen from "./screens/Ledcontrol";
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +26,7 @@ export default function App() {
         <Stack.Screen name="Sensors" component={SensorScreen} />
         <Stack.Screen name="Charts" component={ChartScreen} />
         <Stack.Screen name="PumpControl" component={PumpControlScreen} />
+        <Stack.Screen name="LedControl" component={LedControlScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

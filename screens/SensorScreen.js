@@ -19,7 +19,7 @@ export default function SensorScreen({ navigation }) {
       status: "Normal",
     },
     {
-      id: "humidity",
+      id: "light",
       name: "Light",
       value: "Loading...",
       icon: "sunny-outline",
@@ -46,7 +46,15 @@ export default function SensorScreen({ navigation }) {
       icon: "bulb-outline",
       status: "Normal",
     },
+    {
+      id: "humi",
+      name: "Humidity Status",
+      value: "Loading...",
+      icon: "cloud-outline",
+      status: "Normal",
+    },
   ]);
+  
 
   const fetchSensorData = async () => {
     try {
@@ -57,24 +65,29 @@ export default function SensorScreen({ navigation }) {
         soil: "https://io.adafruit.com/api/v2/longthangtran/feeds/iot-soil-moisture/data",
         pump: "https://io.adafruit.com/api/v2/longthangtran/feeds/iot-pump/data",
         led: "https://io.adafruit.com/api/v2/longthangtran/feeds/iot-led/data",
+        humi: "https://io.adafruit.com/api/v2/longthangtran/feeds/iot-relay/data",
       };
-
+  
       const responses = await Promise.all(
         Object.values(endpoints).map((url) =>
           fetch(url).then((res) => res.json())
         )
       );
-
-      const [temp, light, soil, pump, led] = responses.map(
+  
+      
+  
+      const [temp, light, soil, pump, led, humi] = responses.map(
         (data) => data[0]?.value || "N/A"
       );
-
+  
+     
+  
       setSensorData((prev) =>
         prev.map((sensor) => {
           switch (sensor.id) {
             case "temp":
               return { ...sensor, value: `${temp}°C` };
-            case "humidity":
+            case "light":
               return { ...sensor, value: `${light} lux` };
             case "soil":
               return { ...sensor, value: `${soil}%` };
@@ -82,6 +95,8 @@ export default function SensorScreen({ navigation }) {
               return { ...sensor, value: pump === "1" ? "ON" : "OFF" };
             case "led":
               return { ...sensor, value: led === "1" ? "ON" : "OFF" };
+            case "humi":
+              return { ...sensor, value: `${humi}%` };
             default:
               return sensor;
           }
@@ -98,6 +113,7 @@ export default function SensorScreen({ navigation }) {
 
     return () => clearInterval(interval); // Cleanup on unmount
   }, []);
+ 
 
   return (
     <SafeAreaView style={styles.container}>
@@ -141,15 +157,21 @@ export default function SensorScreen({ navigation }) {
             style={[styles.button, styles.chartButton]}
             onPress={() => navigation.navigate("Charts")}
           >
-            <Ionicons name="bar-chart-outline" size={24} color="white" />
+            <Ionicons name="bar-chart-outline" size={20} color="white" />
             <Text style={styles.buttonText}>View Charts</Text>
           </TouchableOpacity>
-
+          <TouchableOpacity
+            style={[styles.button, styles.chartButton]}
+            onPress={() => navigation.navigate("LedControl")}
+          >
+            <Ionicons name="bulb-outline" size={20} color="white" />
+            <Text style={styles.buttonText}>Led Control</Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.pumpButton]}
             onPress={() => navigation.navigate("PumpControl")}
           >
-            <Ionicons name="water-outline" size={24} color="white" />
+            <Ionicons name="water-outline" size={20} color="white" />
             <Text style={styles.buttonText}>Pump Control</Text>
           </TouchableOpacity>
         </View>
@@ -254,6 +276,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#4CAF50",
   },
   pumpButton: {
+    backgroundColor: "#2E7D32",
+  },
+  ledButton: {
     backgroundColor: "#2E7D32",
   },
   buttonText: {
